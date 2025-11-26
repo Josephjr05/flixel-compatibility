@@ -2160,6 +2160,7 @@ class FlxCamera extends FlxBasic
 		return filters;
 	}
 	
+	// deprecated setter
 	inline function set__filters(Value:Array<BitmapFilter>):Array<BitmapFilter>
 	{
 		return filters = Value;
