@@ -2165,6 +2165,7 @@ class FlxCamera extends FlxBasic
 	{
 		return filters = Value;
 	}
+	// test github
 	
 	/**
 	 * Do not use the following fields! They only exists because FlxCamera extends FlxBasic,
