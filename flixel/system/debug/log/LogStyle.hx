@@ -31,13 +31,28 @@ abstract LogStyle(FlxLogStyle) from FlxLogStyle to FlxLogStyle
 	}
 	
 	@:deprecated("LogStyle.ERROR is deprecated, use FlxG.log.styles.ERROR, instead")
-	public static var ERROR  (default, set):LogStyle;
-	static function set_ERROR(style:LogStyle)
+	public static var ERROR(get, set):LogStyle;
+	
+	// Lowercase "error" is safe on Windows.
+	@:isVar public static var error(default, set):LogStyle;
+	
+	static function get_ERROR():LogStyle
+	{
+		return error;
+	}
+	
+	static function set_ERROR(style:LogStyle):LogStyle
+	{
+		return error = style;
+	}
+	
+	static function set_error(style:LogStyle):LogStyle
 	{
 		@:bypassAccessor
 		FlxG.log.styles.error = style;
-		return ERROR = style;
+		return error = style;
 	}
+
 	
 	@:deprecated("LogStyle.NOTICE is deprecated, use FlxG.log.styles.NOTICE, instead")
 	public static var NOTICE (default, set):LogStyle;

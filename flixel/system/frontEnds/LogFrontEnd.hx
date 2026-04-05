@@ -75,7 +75,7 @@ class FlxLogStylesList
 	@:haxe.warning("-WDeprecated")
 	function set_error  (style:FlxLogStyle)
 	{
-		@:bypassAccessor LogStyle.ERROR = style;
+		@:bypassAccessor LogStyle.error = style;
 		return this.error = style;
 	}
 	
