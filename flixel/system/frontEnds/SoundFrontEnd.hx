@@ -17,7 +17,6 @@ import openfl.media.Sound;
  * Accessed via `FlxG.sound`.
  */
 @:allow(flixel.FlxG)
-@:access(flixel.sound.FlxSound)
 class SoundFrontEnd
 {
 	/**
@@ -34,7 +33,7 @@ class SoundFrontEnd
 	 * Set this hook to get a callback whenever the volume changes.
 	 * Function should take the form myVolumeHandler(volume:Float).
 	 */
-	@:deprecated("volumeHandler is deprecated, use onVolumeChange, instead") // 5.9.0
+	@:deprecated("volumeHandler is deprecated, use onVolumeChange, instead")
 	public var volumeHandler:Float->Void;
 
 	/**
@@ -87,7 +86,7 @@ class SoundFrontEnd
 	public var defaultMusicGroup:FlxSoundGroup = new FlxSoundGroup();
 
 	/**
-	 * The default, group sounds are added to in `create` and `play` methods.
+	 * The group sounds in load() / play() / stream() are added to unless specified otherwise.
 	 */
 	public var defaultSoundGroup:FlxSoundGroup = new FlxSoundGroup();
 
@@ -100,210 +99,124 @@ class SoundFrontEnd
 	 * Set this to a number between 0 and 1 to change the global volume.
 	 */
 	public var volume(default, set):Float = 1;
-	
-	function recycle(?group:FlxSoundGroup)
-	{
-		final sound = list.recycle(FlxSound);
-		sound.cleanup(true);
-		sound.exists = true;
-		(group != null ? group : defaultSoundGroup).add(sound);
-		return sound;
-	}
-	
-	function recycleMusic(group:Null<FlxSoundGroup>)
+
+	/**
+	 * Set up and play a looping background soundtrack.
+	 *
+	 * **Note:** If the `FLX_DEFAULT_SOUND_EXT` flag is enabled, you may omit the file extension
+	 *
+	 * @param   embeddedMusic  The sound file you want to loop in the background.
+	 * @param   volume         How loud the sound should be, from 0 to 1.
+	 * @param   looped         Whether to loop this music.
+	 * @param   group          The group to add this sound to.
+	 */
+	public function playMusic(embeddedMusic:FlxSoundAsset, volume = 1.0, looped = true, ?group:FlxSoundGroup):Void
 	{
 		if (group == null)
 			group = defaultMusicGroup;
 		
 		if (music == null)
 		{
-			music = recycle(group);
+			music = new FlxSound();
 		}
 		else if (music.active)
 		{
 			music.stop();
-			group.add(music);
 		}
 		
-		return music;
+		music.loadEmbedded(embeddedMusic, looped);
+		music.volume = volume;
+		music.persist = true;
+		group.add(music);
+		music.play();
 	}
 
-	/**
-	 * Set up and play a looping background soundtrack.
-	 *
-	 * **Note:** If the `FLX_DEFAULT_SOUND_EXT` flag is enabled, you may omit the file extension
-	 *
-	 * @param   assetId  The sound file you want to loop in the background.
-	 * @param   volume   How loud the sound should be, from 0 to 1.
-	 * @param   loop     Whether to loop this music.
-	 * @param   group    The group to manage this sound, if `null`, `defaultMusicGroup` is used.
-	 */
-	@:deprecated("playMusic(id, volume, loop, group) is deprecated, use playMusic(id, group, volume, loop), instead") // 6.2.0
-	overload public inline extern function playMusic(assetId, volume = 1.0, loop = true, group:Null<FlxSoundGroup>):Void
-	{
-		playMusic(assetId, group, volume, loop);
-	}
-	
-	/**
-	 * Set up and play a looping background soundtrack.
-	 *
-	 * **Note:** If the `FLX_DEFAULT_SOUND_EXT` flag is enabled, you may omit the file extension
-	 *
-	 * @param   asset       The sound file you want to loop in the background.
-	 * @param   group       The group to manage this sound, if `null`, `defaultMusicGroup` is used.
-	 * @param   volume      How loud the sound should be, from 0 to 1.
-	 * @param   loop        Whether to loop this music.
-	 * @param   onComplete  Called when the sound finishes playing, before it checks whether to loop.
-	 */
-	overload public inline extern function playMusic(asset:FlxSoundAsset, ?group, volume = 1.0, loop = true, ?onComplete):FlxSound
-	{
-		return recycleMusic(group)
-			.loadHelper(asset)
-			.setup(volume, loop, false, onComplete)
-			.play();
-	}
-	
 	/**
 	 * Creates a new FlxSound object.
 	 *
 	 * **Note:** If the `FLX_DEFAULT_SOUND_EXT` flag is enabled, you may omit the file extension
-
-	 * @param   assetId      The embedded sound resource you want to play.  To stream, use the optional URL parameter instead.
-	 * @param   volume       How loud to play it (0 to 1).
-	 * @param   loop         Whether to loop this sound.
-	 * @param   group        The group to manage this sound, if `null`, `defaultSoundGroup` is used.
-	 * @param   autoDestroy  Whether to destroy this sound when it finishes playing.
-	 *                       Leave this value set to "false" if you want to re-use this FlxSound instance.
-	 * @param   autoPlay     Whether to play the sound.
-	 * @param   url          Load a sound from an external web resource instead.  Only used if EmbeddedSound = null.
-	 * @param   onComplete   Called when the sound finishes playing, before it checks whether to to loop.
-	 * @param   onLoad       Called when the sound finishes loading.  Called immediately for succesfully loaded embedded sounds.
+	 *
+	 * @param   embeddedSound   The embedded sound resource you want to play.  To stream, use the optional URL parameter instead.
+	 * @param   volume          How loud to play it (0 to 1).
+	 * @param   looped          Whether to loop this sound.
+	 * @param   group           The group to add this sound to.
+	 * @param   autoDestroy     Whether to destroy this sound when it finishes playing.
+	 *                          Leave this value set to "false" if you want to re-use this FlxSound instance.
+	 * @param   autoPlay        Whether to play the sound.
+	 * @param   url             Load a sound from an external web resource instead.  Only used if EmbeddedSound = null.
+	 * @param   onComplete      Called when the sound finished playing.
+	 * @param   onLoad          Called when the sound finished loading.  Called immediately for succesfully loaded embedded sounds.
 	 * @return  A FlxSound object.
 	 */
-	@:deprecated("FlxG.sound.load is deprecated, use either createFromURL() or create(assetId).setup(...).play()") // 6.2.0
-	public function load(?asset, volume = 1.0, loop = false, ?group, autoDestroy = false, autoPlay = false,
-			?url, ?onComplete, ?onLoad)
+	public function load(?embeddedSound:FlxSoundAsset, volume = 1.0, looped = false, ?group:FlxSoundGroup, autoDestroy = false, autoPlay = false, ?url:String,
+			?onComplete:Void->Void, ?onLoad:Void->Void):FlxSound
 	{
-		return if (asset == null && url == null)
+		if ((embeddedSound == null) && (url == null))
 		{
 			FlxG.log.warn("FlxG.sound.load() requires either\nan embedded sound or a URL to work.");
-			null;
+			return null;
 		}
-		else if (asset == null && url != null)
+
+		var sound:FlxSound = list.recycle(FlxSound);
+
+		if (embeddedSound != null)
 		{
-			if (autoPlay)
-			{
-				playFromURL(url, group, onLoad, volume, loop, autoDestroy, onComplete);
-			}
-			else
-			{
-				final sound = createFromURL(url, group, onLoad);
-				sound.setup(volume, loop, autoDestroy, onComplete);
-				if (autoPlay)
-					sound.play();
-				
-				sound;
-			}
+			sound.loadEmbedded(embeddedSound, looped, autoDestroy, onComplete);
+			loadHelper(sound, volume, group, autoPlay);
+			// Call OnlLoad() because the sound already loaded
+			if (onLoad != null && sound._sound != null)
+				onLoad();
 		}
 		else
 		{
-			if (url != null)
-				FlxG.log.warn("FlxG.sound.load() received both an embedded asset and a url, ignoring url.");
-			
-			final sound = recycle(group)
-				.loadHelper(asset)
-				.setup(volume, loop, autoDestroy, onComplete);
-			
+			var loadCallback = onLoad;
 			if (autoPlay)
-				sound.play();
-			
-			// Call OnLoad() because the sound already loaded
-			if (onLoad != null && sound._sound != null)
-				onLoad();
-			
-			sound;
+			{
+				// Auto play the sound when it's done loading
+				loadCallback = function()
+				{
+					sound.play();
+
+					if (onLoad != null)
+						onLoad();
+				}
+			}
+
+			sound.loadStream(url, looped, autoDestroy, onComplete, loadCallback);
+			loadHelper(sound, volume, group);
 		}
+
+		return sound;
 	}
-	
-	/**
-	 * Creates a new FlxSound object. It's recommended to set up sounds using chainging, for
-	 * instance:
-	 * ```haxe
-	 * FlxG.sound.create("assets/sounds/mySound").setup(1.0, true).play();
-	 * ```
-	 *
-	 * @param   asset       The embedded sound resource you want to play. Accepts various types,
-	 *                      typically an asset ID, you may omit the file extension
-	 * @param   group       The group to manage this sound, if `null`, `defaultSoundGroup` is used
-	 * @param   allowCache  Useed for asset IDs, Whether to use the asset caching system
-	 * @return  This `FlxSound` instance
-	 * 
-	 * @since 6.2.0
-	 */
-	public function create(asset:FlxSoundAsset, ?group:FlxSoundGroup, allowCache = true):FlxSound
+
+	function loadHelper(sound:FlxSound, volume:Float, group:FlxSoundGroup, autoPlay = false):FlxSound
 	{
-		return recycle(group).loadHelper(asset, false, allowCache, true);
+		if (group == null)
+			group = defaultSoundGroup;
+		
+		sound.volume = volume;
+		group.add(sound);
+		
+		if (autoPlay)
+			sound.play();
+		
+		return sound;
 	}
-	
-	#if FLX_STREAM_SOUND
-	/**
-	 * Streams a sound from the given file path. Unlike the `load` method, this will load and
-	 * unload chunks of data as the sound plays, keeping memory usage low. This is recommended for
-	 * longer sounds, like music tracks. For shorter sounds like sound effects, it is better to
-	 * use the `load` method, which loads the entire sound into memory before playing it.
-	 * 
-	 * Due to a backend limitation, audio streaming is currently only available on native targets 
-	 * and OGG/Vorbis audio files.
-	 * 
-	 * @param   assetId  The ID or asset path to the sound asset. You may omit the file extension
-	 * @param   group    The group to manage this sound, if `null`, `defaultSoundGroup` is used
-	 * @return  This `FlxSound` instance (nice for chaining stuff together, if you're into that)
-	 * 
-	 * @since 6.2.0
-	 */
-	public function createStreamed(assetId:String, ?group:FlxSoundGroup):FlxSound
-	{
-		return recycle(group)
-			.loadStreamedHelper(assetId, false);
-	}
-	
-	/**
-	 * Streams a sound from the given file path. Unlike the `play` method, this will load and
-	 * unload chunks of data as the sound plays, keeping memory usage low. This is recommended for
-	 * longer sounds, like music tracks. For shorter sounds like sound effects, it is better to
-	 * use the `play` method, which loads the entire sound into memory before playing it.
-	 * 
-	 * Due to a backend limitation, audio streaming is currently only available on native targets 
-	 * and OGG/Vorbis audio files.
-	 * 
-	 * @param   assetId  The ID or asset path to the sound asset. You may omit the file extension
-	 * @param   group    The group to manage this sound, if `null`, `defaultSoundGroup` is used
-	 * @param   volume   How loud to play it (0 to 1).
-	 * @param   loop     Whether or not this sound should loop endlessly.
-	 * @param   autoDestroy  Whether or not this FlxSound instance should be destroyed when the sound finishes playing.
-	 * @param   onComplete   Called when the sound finishes playing, before it checks whether to to loop.
-	 * @return  This FlxSound instance (nice for chaining stuff together, if you're into that).
-	 * 
-	 * @since 6.2.0
-	 */
-	public function playStreamed(assetId, ?group, volume = 1.0, loop = false, autoDestroy = false, ?onComplete):FlxSound 
-	{
-		return createStreamed(assetId, group)
-			.setup(volume, loop, autoDestroy, onComplete)
-			.play();
-	}
-	#end
 
 	/**
 	 * Method for sound caching (especially useful on mobile targets). The game may freeze
 	 * for some time the first time you try to play a sound if you don't use this method.
 	 *
-	 * @param   assetId  Name of sound assets specified in your .xml project file
+	 * @param   embeddedSound  Name of sound assets specified in your .xml project file
 	 * @return  Cached Sound object
 	 */
-	public inline function cache(assetId:String):Null<Sound>
+	public inline function cache(embeddedSound:String):Sound
 	{
-		return FlxG.assets.getSound(assetId, true, FlxG.log.styles.error);
+		// load the sound into the OpenFL assets cache
+		if (FlxG.assets.exists(embeddedSound, SOUND))
+			return FlxG.assets.getSoundUnsafe(embeddedSound, true);
+		FlxG.log.error('Could not find a Sound asset with an ID of \'$embeddedSound\'.');
+		return null;
 	}
 
 	/**
@@ -319,93 +232,47 @@ class SoundFrontEnd
 	}
 
 	/**
-	 * Plays a sound from an embedded sound. Tries to recycle a pooled sound first.
+	 * Plays a sound from an embedded sound. Tries to recycle a cached sound first.
 	 *
 	 * **Note:** If the `FLX_DEFAULT_SOUND_EXT` flag is enabled, you may omit the file extension
 	 *
-	 * @param   assetId      The embedded sound resource you want to play.
-	 * @param   volume       How loud to play it (0 to 1).
-	 * @param   loop         Whether to loop this sound.
-	 * @param   group        The group to manage this sound, if `null`, `defaultSoundGroup` is used.
-	 * @param   autoDestroy  Whether to destroy this sound when it finishes playing.
-	 *                       Leave this value set to "false" if you want to re-use this FlxSound instance.
-	 * @param   onComplete   Called when the sound finishes playing, before it checks whether to to loop.
+	 * @param   embeddedSound  The embedded sound resource you want to play.
+	 * @param   volume         How loud to play it (0 to 1).
+	 * @param   looped         Whether to loop this sound.
+	 * @param   group          The group to add this sound to.
+	 * @param   autoDestroy    Whether to destroy this sound when it finishes playing.
+	 *                         Leave this value set to "false" if you want to re-use this FlxSound instance.
+	 * @param   onComplete     Called when the sound finished playing
 	 * @return  A FlxSound object.
 	 */
-	public function play(asset:FlxSoundAsset, volume = 1.0, loop = false, ?group:FlxSoundGroup, autoDestroy = true, ?onComplete):FlxSound
+	public function play(embeddedSound:FlxSoundAsset, volume = 1.0, looped = false, ?group:FlxSoundGroup, autoDestroy = true, ?onComplete:Void->Void):FlxSound
 	{
-		return recycle(group)
-			.loadHelper(asset)
-			.setup(volume, loop, autoDestroy, onComplete)
-			.play();
-	}
-	
-	/**
-	 * Plays a sound from a URL. Tries to recycle a pooled sound first
-	 *
-	 * @param   url     A link to an external web resource
-	 * @param   group   The group to manage this sound, if `null`, `defaultSoundGroup` is used
-	 * @param   onLoad  Called when the sound finishes loading
-	 * @return  A FlxSound object.
-	 * 
-	 * @since 6.2.0
-	 */
-	public function createFromURL(url:String, ?group:FlxSoundGroup, ?onLoad:()->Void):FlxSound
-	{
-		return recycle(group)
-			.loadFromURL(url, onLoad);
-	}
-
-	/**
-	 * Plays a sound from a URL. Tries to recycle a pooled sound first
-	 *
-	 * @param   url          A link to an external web resource
-	 * @param   group        The group to manage this sound, if `null`, `defaultSoundGroup` is used
-	 * @param   onLoad       Called when the sound finishes loading
-	 * @param   volume       How loud to play it (0 to 1)
-	 * @param   loop         Whether to loop this sound
-	 * @param   autoDestroy  Whether to destroy this sound when it finishes playing.
-	 *                       Leave this value set to "false" if you want to re-use this FlxSound instance
-	 * @param   onLoad       Called when the sound finishes playing, before it checks whether to to loop
-	 * @return  A FlxSound object.
-	 * @since 6.2.0
-	 */
-	public function playFromURL(url:String, ?group:FlxSoundGroup, ?onLoad:()->Void, volume = 1.0, loop = false,
-			autoDestroy = false, ?onComplete:()->Void):FlxSound
-	{
-		final sound = recycle(group);
-		// Auto play the sound when it's done loading
-		function playOnLoad()
+		if ((embeddedSound is String))
 		{
-			sound.play();
-
-			if (onLoad != null)
-				onLoad();
+			embeddedSound = cache(embeddedSound);
 		}
-		
-		return sound.loadFromURL(url, playOnLoad)
-			.setup(volume, loop, autoDestroy, onComplete)
-			.play();
+		var sound = list.recycle(FlxSound).loadEmbedded(embeddedSound, looped, autoDestroy, onComplete);
+		return loadHelper(sound, volume, group, true);
 	}
 
 	/**
-	 * Plays a sound from a URL. Tries to recycle a pooled sound first.
+	 * Plays a sound from a URL. Tries to recycle a cached sound first.
+	 * NOTE: Just calls FlxG.sound.load() with AutoPlay == true.
 	 *
-	 * @param   url          A link to an external web resource.
+	 * @param   url          Load a sound from an external web resource instead.
 	 * @param   volume       How loud to play it (0 to 1).
-	 * @param   loop         Whether to loop this sound.
-	 * @param   group        The group to manage this sound, if `null`, `defaultSoundGroup` is used.
+	 * @param   looped       Whether to loop this sound.
+	 * @param   group        The group to add this sound to.
 	 * @param   autoDestroy  Whether to destroy this sound when it finishes playing.
 	 *                       Leave this value set to "false" if you want to re-use this FlxSound instance.
-	 * @param   onComplete   Called when the sound finishes playing, before it checks whether to to loop.
-	 * @param   onLoad       Called when the sound finishes loading.
+	 * @param   onComplete   Called when the sound finished playing
+	 * @param   onLoad       Called when the sound finished loading.
 	 * @return  A FlxSound object.
 	 */
-	@:deprecated("FlxG.sound.stream() is deprecated, use FlxG.sound.createFromURL() or playFromURL(), instead") // 6.2.0
-	public function stream(url:String, volume = 1.0, loop = false, ?group:FlxSoundGroup, autoDestroy = true,
-			?onComplete:()->Void, ?onLoad:()->Void):FlxSound
+	public function stream(url:String, volume = 1.0, looped = false, ?group:FlxSoundGroup, autoDestroy = true, ?onComplete:Void->Void,
+			?onLoad:Void->Void):FlxSound
 	{
-		return playFromURL(url, group, onLoad, volume, loop, autoDestroy, onComplete);
+		return load(null, volume, looped, group, autoDestroy, true, url, onComplete, onLoad);
 	}
 
 	/**
@@ -537,7 +404,7 @@ class SoundFrontEnd
 		return curvedVolume;
 		
 		// Example of logarithmic to linear sound curve:
-		// final clampedVolume = Math.max(0.001, Math.min(1, curvedVolume));
+		// final clampedVolume = Math.max(minValue, Math.min(1, x));
 		// return 1 - (Math.log(clampedVolume) / Math.log(0.001));
 	}
 	

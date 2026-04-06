@@ -1,5 +1,13 @@
 package flixel;
 
+import openfl.display.Bitmap;
+import openfl.display.BitmapData;
+import openfl.display.DisplayObject;
+import openfl.display.Graphics;
+import openfl.display.Sprite;
+import openfl.geom.ColorTransform;
+import openfl.geom.Point;
+import openfl.geom.Rectangle;
 import flixel.graphics.FlxGraphic;
 import flixel.graphics.frames.FlxFrame;
 import flixel.graphics.tile.FlxDrawBaseItem;
@@ -15,16 +23,8 @@ import flixel.util.FlxColor;
 import flixel.util.FlxDestroyUtil;
 import flixel.util.FlxSpriteUtil;
 import openfl.Vector;
-import openfl.display.Bitmap;
-import openfl.display.BitmapData;
 import openfl.display.BlendMode;
-import openfl.display.DisplayObject;
-import openfl.display.Graphics;
-import openfl.display.Sprite;
 import openfl.filters.BitmapFilter;
-import openfl.geom.ColorTransform;
-import openfl.geom.Point;
-import openfl.geom.Rectangle;
 
 using flixel.util.FlxColorTransformUtil;
 
@@ -242,16 +242,6 @@ class FlxCamera extends FlxBasic
 	 * @since 5.2.0
 	 */
 	public var viewMarginY(default, null):Float;
-
-	// deprecated but still here for compatibility
-	@:deprecated("use viewMarginLeft or viewMarginX")
-	var viewOffsetX(get, set):Float;
-	@:deprecated("use viewMarginTop or viewMarginY")
-	var viewOffsetY(get, set):Float;
-	@:deprecated("use viewMarginLeft or viewMarginX")
-	var viewOffsetWidth(get, never):Float;
-	@:deprecated("use viewMarginTop or viewMarginY")
-	var viewOffsetHeight(get, never):Float;
 
 	// delegates
 
@@ -479,9 +469,6 @@ class FlxCamera extends FlxBasic
 	 * The filters array to be applied to the camera.
 	 */
 	public var filters:Null<Array<BitmapFilter>> = null;
-
-	@:deprecated("_filters is deprecated, use filters instead")
-	var _filters(get, set):Null<Array<BitmapFilter>>;
 
 	/**
 	 * Camera's initial zoom value. Used for camera's scale handling.
@@ -837,7 +824,7 @@ class FlxCamera extends FlxBasic
 		if (FlxG.renderBlit)
 		{
 			if (position == null)
-				position = renderPoint.zero();
+				position = renderPoint.set();
 
 			var verticesLength:Int = vertices.length;
 			var currentVertexPosition:Int = 0;
@@ -1031,7 +1018,7 @@ class FlxCamera extends FlxBasic
 			screen = new FlxSprite();
 			buffer = new BitmapData(width, height, true, 0);
 			screen.pixels = buffer;
-			screen.origin.zero();
+			screen.origin.set();
 			_flashBitmap = new Bitmap(buffer);
 			_scrollRect.addChild(_flashBitmap);
 			_fill = new BitmapData(width, height, true, FlxColor.TRANSPARENT);
@@ -1619,15 +1606,6 @@ class FlxCamera extends FlxBasic
 	}
 
 	/**
-	 * Sets the filter array to be applied to the camera.
-	 */
-	@:deprecated("setFilters() is deprecated, use the filters array instead")
-	public function setFilters(filters:Array<BitmapFilter>):Void
-	{
-		this.filters = filters;
-	}
-
-	/**
 	 * Copy the bounds, focus object, and `deadzone` info from an existing camera.
 	 *
 	 * @param   Camera  The camera you want to copy from.
@@ -1739,7 +1717,7 @@ class FlxCamera extends FlxBasic
 				var oldBuffer:FlxGraphic = screen.graphic;
 				buffer = new BitmapData(width, height, true, 0);
 				screen.pixels = buffer;
-				screen.origin.zero();
+				screen.origin.set();
 				_flashBitmap.bitmapData = buffer;
 				_flashRect.width = width;
 				_flashRect.height = height;
@@ -1785,333 +1763,7 @@ class FlxCamera extends FlxBasic
 		x = X;
 		y = Y;
 	}
-	
-	/**
-	 * Helper for coordinate converters
-	 */
-	static inline function safeGetX(p:Null<FlxPoint>, backup:Float)
-	{
-		return p == null ? backup : p.x;
-	}
-	
-	/**
-	 * Helper for coordinate converters
-	 */
-	static inline function safeGetY(p:Null<FlxPoint>, backup:Float)
-	{
-		return p == null ? backup : p.y;
-	}
-	
-	/**
-	 * Takes a world position and gives the position it will be displayed in the camera's view
-	 * 
-	 * @param   worldPos       The position in the world
-	 * @param   scrollFactorX  How much this camera's scroll affects the result, for parallax
-	 * @param   scrollFactorY  How much this camera's scroll affects the result, for parallax
-	 * @param   result         Optional arg for the returning point
-	 * @since 6.2.0
-	 */
-	overload public inline extern function worldToViewPosition(worldPos:FlxPoint, scrollFactorX = 1.0, scrollFactorY = 1.0, ?result:FlxPoint)
-	{
-		result = worldToViewHelper(worldPos.x, worldPos.y, scrollFactorX, scrollFactorY, result);
-		worldPos.putWeak();
-		return result;
-	}
-	
-	/**
-	 * Takes a world position and gives the position it will be displayed in the camera's view
-	 * 
-	 * @param   worldPos      The position in the world
-	 * @param   scrollFactor  How much this camera's scroll affects the result, for parallax
-	 * @param   result        Optional arg for the returning point
-	 * @since 6.2.0
-	 */
-	overload public inline extern function worldToViewPosition(worldPos:FlxPoint, ?scrollFactor:FlxPoint, ?result:FlxPoint)
-	{
-		result = worldToViewHelper(worldPos.x, worldPos.y, safeGetX(scrollFactor, 1.0), safeGetY(scrollFactor, 1.0), result);
-		worldPos.putWeak();
-		FlxDestroyUtil.putWeak(scrollFactor);
-		return result;
-	}
-	
-	/**
-	 * Takes a world position and gives the position it will be displayed in the camera's view
-	 * 
-	 * @param   worldX        The position in the world
-	 * @param   worldY        The position in the world
-	 * @param   scrollFactor  How much this camera's scroll affects the result, for parallax=
-	 * @param   result        Optional arg for the returning point
-	 * @since 6.2.0
-	 */
-	overload public inline extern function worldToViewPosition(worldX:Float, worldY:Float, ?scrollFactor:FlxPoint, ?result:FlxPoint)
-	{
-		result = worldToViewHelper(worldX, worldY, safeGetX(scrollFactor, 1.0), safeGetY(scrollFactor, 1.0), result);
-		FlxDestroyUtil.putWeak(scrollFactor);
-		return result;
-	}
-	
-	/**
-	 * Takes a world position and gives the position it will be displayed in the camera's view
-	 * 
-	 * @param   worldX        The position in the world
-	 * @param   worldY        The position in the world
-	 * @param   scrollFactorX  How much this camera's scroll affects the result, for parallax
-	 * @param   scrollFactorY  How much this camera's scroll affects the result, for parallax
-	 * @param   result         Optional arg for the returning point
-	 * @since 6.2.0
-	 */
-	overload public inline extern function worldToViewPosition(worldX:Float, worldY:Float, scrollFactorX = 1.0, scrollFactorY = 1.0, ?result)
-	{
-		return worldToViewHelper(worldX, worldY, scrollFactorX, scrollFactorY, result);
-	}
-	
-	function worldToViewHelper(worldX:Float, worldY:Float, scrollFactorX = 1.0, scrollFactorY = 1.0, ?result:FlxPoint):FlxPoint
-	{
-		if (result == null)
-			result = FlxPoint.get();
-		
-		return result.set(worldToViewX(worldX, scrollFactorX), worldToViewY(worldY, scrollFactorY));
-	}
-	
-	/**
-	 * Takes a world position and gives the position it will be displayed in the camera's view
-	 * 
-	 * @param   worldX        The position in the world
-	 * @param   scrollFactor  How much this camera's scroll affects the result, for parallax
-	 * @param   result         Optional arg for the returning point
-	 * @since 6.2.0
-	 */
-	public function worldToViewX(worldX:Float, scrollFactor = 1.0)
-	{
-		return worldX - (scroll.x * scrollFactor) - viewMarginX;
-	}
-	
-	/**
-	 * Takes a world position and gives the position it will be displayed in the camera's view
-	 * 
-	 * @param   worldY        The position in the world
-	 * @param   scrollFactor  How much this camera's scroll affects the result, for parallax
-	 * @param   result        Optional arg for the returning point
-	 * @since 6.2.0
-	 */
-	public function worldToViewY(worldY:Float, scrollFactor = 1.0)
-	{
-		return worldY - (scroll.y * scrollFactor) - viewMarginY;
-	}
-	
-	/**
-	 * Takes a position in this camera's view and gives the world position being displayed
-	 * 
-	 * @param   viewPos        The position in this camera's view
-	 * @param   scrollFactorX  How much this camera's scroll affects the result, for parallax
-	 * @param   scrollFactorY  How much this camera's scroll affects the result, for parallax
-	 * @param   result         Optional arg for the returning point
-	 * @since 6.2.0
-	 */
-	overload public inline extern function viewToWorldPosition(viewPos:FlxPoint, scrollFactorX = 1.0, scrollFactorY = 1.0, ?result:FlxPoint)
-	{
-		result = viewToWorldHelper(viewPos.x, viewPos.y, scrollFactorX, scrollFactorY, result);
-		viewPos.putWeak();
-		return result;
-	}
-	
-	/**
-	 * Takes a position in this camera's view and gives the world position being displayed
-	 * 
-	 * @param   viewPos       The position in this camera's view
-	 * @param   scrollFactor  How much this camera's scroll affects the result, for parallax
-	 * @param   result        Optional arg for the returning point
-	 * @since 6.2.0
-	 */
-	overload public inline extern function viewToWorldPosition(viewPos:FlxPoint, ?scrollFactor:FlxPoint, ?result:FlxPoint)
-	{
-		result = viewToWorldHelper(viewPos.x, viewPos.y, safeGetX(scrollFactor, 1.0), safeGetY(scrollFactor, 1.0), result);
-		viewPos.putWeak();
-		FlxDestroyUtil.putWeak(scrollFactor);
-		return result;
-	}
-	
-	/**
-	 * Takes a position in this camera's view and gives the world position being displayed
-	 * 
-	 * @param   viewX         The position in this camera's view
-	 * @param   viewY         The position in this camera's view
-	 * @param   scrollFactor  How much this camera's scroll affects the result, for parallax
-	 * @param   result        Optional arg for the returning point
-	 * @since 6.2.0
-	 */
-	overload public inline extern function viewToWorldPosition(viewX:Float, viewY:Float, ?scrollFactor:FlxPoint, ?result:FlxPoint)
-	{
-		result = viewToWorldHelper(viewX, viewY, safeGetX(scrollFactor, 1.0), safeGetY(scrollFactor, 1.0), result);
-		FlxDestroyUtil.putWeak(scrollFactor);
-		return result;
-	}
-	
-	/**
-	 * Takes a position in this camera's view and gives the world position being displayed
-	 * 
-	 * @param   viewX          The position in this camera's view
-	 * @param   viewY          The position in this camera's view
-	 * @param   scrollFactorX  How much this camera's scroll affects the result, for parallax
-	 * @param   scrollFactorY  How much this camera's scroll affects the result, for parallax
-	 * @param   result         Optional arg for the returning point
-	 * @since 6.2.0
-	 */
-	overload public inline extern function viewToWorldPosition(viewX:Float, viewY:Float, scrollFactorX = 1.0, scrollFactorY = 1.0, ?result)
-	{
-		return viewToWorldHelper(viewX, viewY, scrollFactorX, scrollFactorY, result);
-	}
-	
-	function viewToWorldHelper(viewX:Float, viewY:Float, scrollFactorX = 1.0, scrollFactorY = 1.0, ?result:FlxPoint):FlxPoint
-	{
-		if (result == null)
-			result = FlxPoint.get();
-		
-		return result.set(viewToWorldX(viewX, scrollFactorX), viewToWorldY(viewY, scrollFactorY));
-	}
-	
-	/**
-	 * Takes a position in this camera's view and gives the world position being displayed
-	 * 
-	 * @param   viewX         The position in this camera's view
-	 * @param   scrollFactor  How much this camera's scroll affects the result, for parallax
-	 * @param   result        Optional arg for the returning point
-	 * @since 6.2.0
-	 */
-	public function viewToWorldX(viewX:Float, scrollFactor = 1.0)
-	{
-		return viewX + (scroll.x * scrollFactor) + viewMarginX;
-	}
-	
-	/**
-	 * Takes a position in this camera's view and gives the world position being displayed
-	 * 
-	 * @param   viewY         The position in this camera's view
-	 * @param   scrollFactor  How much this camera's scroll affects the result, for parallax
-	 * @param   result        Optional arg for the returning point
-	 * @since 6.2.0
-	 */
-	public function viewToWorldY(viewY:Float, scrollFactor = 1.0)
-	{
-		return viewY + (scroll.y * scrollFactor) + viewMarginY;
-	}
-	
-	/**
-	 * Takes a position in the `FlxGame` and gives the corresponding position in this camera's view
-	 * 
-	 * @param   gamePos  The position in the `FlxGame`
-	 * @param   result   Optional arg for the returning point
-	 * @since 6.2.0
-	 */
-	overload public inline extern function gameToViewPosition(gamePos:FlxPoint, ?result)
-	{
-		return gameToViewHelper(gamePos.x, gamePos.y, result);
-	}
-	
-	/**
-	 * Takes a position in the `FlxGame` and gives the corresponding position in this camera's view
-	 * 
-	 * @param   gameX   The position in the `FlxGame`
-	 * @param   gameY   The position in the `FlxGame`
-	 * @param   result  Optional arg for the returning point
-	 * @since 6.2.0
-	 */
-	overload public inline extern function gameToViewPosition(gameX:Float, gameY:Float, ?result:FlxPoint)
-	{
-		return gameToViewHelper(gameX, gameY, result);
-	}
-	
-	function gameToViewHelper(gameX:Float, gameY:Float, ?result:FlxPoint):FlxPoint
-	{
-		if (result == null)
-			result = FlxPoint.get();
-		
-		return result.set(gameToViewX(gameX), gameToViewY(gameY));
-	}
-	
-	/**
-	 * Takes a position in the `FlxGame` and gives the corresponding position in this camera's view
-	 * 
-	 * @param   gameX   The position in the `FlxGame`
-	 * @param   result  Optional arg for the returning point
-	 * @since 6.2.0
-	 */
-	public function gameToViewX(gameX:Float)
-	{
-		return (gameX - x) / zoom;
-	}
-	
-	/**
-	 * Takes a position in the `FlxGame` and gives the corresponding position in this camera's view
-	 * 
-	 * @param   gameY   The position in the `FlxGame`
-	 * @param   result  Optional arg for the returning point
-	 * @since 6.2.0
-	 */
-	public function gameToViewY(gameY:Float)
-	{
-		return (gameY - y) / zoom;
-	}
-	
-	/**
-	 * Takes a position in this camera's view and gives the corresponding position in the `FlxGame`
-	 * 
-	 * @param   viewPos  The position in this camera's view
-	 * @param   result   Optional arg for the returning point
-	 * @since 6.2.0
-	 */
-	overload public inline extern function viewToGamePosition(viewPos:FlxPoint, ?result)
-	{
-		return viewToGameHelper(viewPos.x, viewPos.y, result);
-	}
-	
-	/**
-	 * Takes a position in this camera's view and gives the corresponding position in the `FlxGame`
-	 * 
-	 * @param   viewX   The position in this camera's view
-	 * @param   viewY   The position in this camera's view
-	 * @param   result  Optional arg for the returning point
-	 * @since 6.2.0
-	 */
-	overload public inline extern function viewToGamePosition(viewX:Float, viewY:Float, ?result:FlxPoint)
-	{
-		return viewToGameHelper(viewX, viewY, result);
-	}
-	
-	function viewToGameHelper(viewX:Float, viewY:Float, ?result:FlxPoint):FlxPoint
-	{
-		if (result == null)
-			result = FlxPoint.get();
-		
-		return result.set(viewToGameX(viewX), viewToGameY(viewY));
-	}
-	
-	/**
-	 * Takes a position in this camera's view and gives the corresponding position in the `FlxGame`
-	 * 
-	 * @param   viewX   The position in this camera's view
-	 * @param   result  Optional arg for the returning point
-	 * @since 6.2.0
-	 */
-	public function viewToGameX(viewX:Float)
-	{
-		// return (viewX - x) / zoom;
-		return viewX * zoom + this.x;
-	}
-	
-	/**
-	 * Takes a position in this camera's view and gives the corresponding position in the `FlxGame`
-	 * 
-	 * @param   viewY   The position in this camera's view
-	 * @param   result  Optional arg for the returning point
-	 * @since 6.2.0
-	 */
-	public function viewToGameY(viewY:Float)
-	{
-		// return (viewY - y) / zoom;
-		return viewY * zoom + this.y;
-	}
-	
+
 	/**
 	 * Specify the bounding rectangle of where the camera is allowed to move.
 	 *
@@ -2362,14 +2014,6 @@ class FlxCamera extends FlxBasic
 		return this.visible = visible;
 	}
 
-	@:deprecated("Use calcMarginX")
-	inline function calcOffsetX():Void
-		calcMarginX();
-		
-	@:deprecated("Use calcMarginY")
-	inline function calcOffsetY():Void
-		calcMarginY();
-
 	inline function calcMarginX():Void
 	{
 		viewMarginX = 0.5 * width * (scaleX - initialZoom) / scaleX;
@@ -2448,48 +2092,6 @@ class FlxCamera extends FlxBasic
 	inline function get_viewBottom():Float
 	{
 		return scroll.y + viewMarginBottom;
-	}
-	// deprecated vars
-	
-	inline function get_viewOffsetX():Float
-	{
-		return viewMarginX;
-	}
-	
-	inline function set_viewOffsetX(value:Float):Float
-	{
-		return viewMarginX = value;
-	}
-	
-	inline function get_viewOffsetY():Float
-	{
-		return viewMarginY;
-	}
-	
-	inline function set_viewOffsetY(value:Float):Float
-	{
-		return viewMarginY = value;
-	}
-	
-	inline function get_viewOffsetWidth():Float
-	{
-		return viewMarginRight;
-	}
-	
-	inline function get_viewOffsetHeight():Float
-	{
-		return viewMarginBottom;
-	}
-	
-	inline function get__filters():Array<BitmapFilter>
-	{
-		return filters;
-	}
-	
-	// deprecated setter
-	inline function set__filters(Value:Array<BitmapFilter>):Array<BitmapFilter>
-	{
-		return filters = Value;
 	}
 	
 	/**

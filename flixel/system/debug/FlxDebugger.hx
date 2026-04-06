@@ -417,7 +417,7 @@ class FlxDebugger extends openfl.display.Sprite
 			resetButtonLayout();
 	}
 
-	public function addWindowToggleButton(window:Window, icon:FlxGraphicAsset):Void
+	public function addWindowToggleButton(window:Window, icon:FlxGraphicSource):Void
 	{
 		var button = addButton(RIGHT, icon.resolveBitmapData(), window.toggleVisible, true, true);
 		window.toggleButton = button;
@@ -508,9 +508,9 @@ class FlxDebugger extends openfl.display.Sprite
 	inline function openGitHub():Void
 	{
 		var url = "https://github.com/HaxeFlixel/flixel";
-		if (FlxG.VERSION.sha != "")
+		if (FlxVersion.sha != "")
 		{
-			url += '/commit/${FlxG.VERSION.sha}';
+			url += '/commit/${FlxVersion.sha}';
 		}
 		FlxG.openURL(url);
 	}

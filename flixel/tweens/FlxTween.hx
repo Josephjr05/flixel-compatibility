@@ -505,7 +505,6 @@ class FlxTween implements IFlxDestroyable
 	public var active(default, set):Bool = false;
 	public var duration:Float = 0;
 	public var ease:EaseFunction;
-	public var framerate:Float;
 	public var onStart:TweenCallback;
 	public var onUpdate:TweenCallback;
 	public var onComplete:TweenCallback;
@@ -563,7 +562,6 @@ class FlxTween implements IFlxDestroyable
 		onUpdate = Options.onUpdate;
 		onComplete = Options.onComplete;
 		ease = Options.ease;
-		framerate = Options.framerate != null ? Options.framerate : 0;
 		setDelays(Options.startDelay, Options.loopDelay);
 		this.manager = manager != null ? manager : globalManager;
 	}
@@ -621,23 +619,13 @@ class FlxTween implements IFlxDestroyable
 
 	function update(elapsed:Float):Void
 	{
-		var preTick:Float = _secondsSinceStart;
 		_secondsSinceStart += elapsed;
-		var postTick:Float = _secondsSinceStart;
-
 		var delay:Float = (executions > 0) ? loopDelay : startDelay;
 		if (_secondsSinceStart < delay)
 		{
 			return;
 		}
-
-		if (framerate > 0)
-		{
-			preTick = Math.fround(preTick * framerate) / framerate;
-			postTick = Math.fround(postTick * framerate) / framerate;
-		}
-
-		scale = Math.max((postTick - delay), 0) / duration;
+		scale = Math.max((_secondsSinceStart - delay), 0) / duration;
 		if (ease != null)
 		{
 			scale = ease(scale);
@@ -659,7 +647,7 @@ class FlxTween implements IFlxDestroyable
 		}
 		else
 		{
-			if (postTick > preTick && onUpdate != null)
+			if (onUpdate != null)
 				onUpdate(this);
 		}
 	}
@@ -930,12 +918,6 @@ typedef TweenOptions =
 	 * Optional easer function (see `FlxEase`).
 	 */
 	@:optional var ease:EaseFunction;
-
-	/**
-	 * Optional set framerate for this tween to update at.
-	 * This also affects how often `onUpdate` is called.
-	 */
-	@:optional var framerate:Null<Float>;
 
 	/**
 	 * Optional start callback function.
