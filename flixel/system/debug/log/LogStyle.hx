@@ -1,7 +1,6 @@
 package flixel.system.debug.log;
 
 import flixel.util.FlxSignal;
-import haxe.PosInfos;
 
 using flixel.util.FlxStringUtil;
 
@@ -49,8 +48,8 @@ class LogStyle
 	 * **Note:** Unlike the deprecated `callbackFunction`, this is called every time,
 	 * even when logged with `once = true` and even in release mode.
 	 */
-	public final onLog = new FlxTypedSignal<(data:Any, ?pos:PosInfos) -> Void>();
-	
+	public final onLog = new FlxTypedSignal<(data:Any)->Void>();
+
 	/**
 	 * Whether an exception is thrown when this LogStyle is used.
 	 * **Note**: Unlike other log style properties, this happens even in release mode.
@@ -75,7 +74,7 @@ class LogStyle
 	 */
 	 @:haxe.warning("-WDeprecated")
 	public function new(prefix = "", color = "FFFFFF", size = 12, bold = false, italic = false, underlined = false,
-			?errorSound:String, openConsole = false, ?callbackFunction:()->Void, ?callback:(Any, ?PosInfos)->Void, throwException = false)
+			?errorSound:String, openConsole = false, ?callbackFunction:()->Void, ?callback:(Any)->Void, throwException = false)
 	{
 		this.prefix = prefix;
 		this.color = color;

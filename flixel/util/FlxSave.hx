@@ -2,6 +2,7 @@ package flixel.util;
 
 import flixel.util.FlxDestroyUtil.IFlxDestroyable;
 import haxe.Exception;
+import openfl.errors.Error;
 import openfl.net.SharedObject;
 import openfl.net.SharedObjectFlushStatus;
 
@@ -29,7 +30,6 @@ import openfl.net.SharedObjectFlushStatus;
  * ## Default Paths
  * - Windows: ```"C:\Users\<username>\AppData\Roaming\<localPath>\<name>.sol"```
  * - Mac: ```"/Users/<username>/Library/Application Support/<localPath>/<name>.sol"```
- * - Linux: ```"/home/<username>/.local/share/<localPath>/<name>.sol"```
  * - Chrome: In the developer tools, go to the Application tab, and under
  *     `Storage->Local Storage->https://<url>.com` with the key:`<localPath>:<name>"`
  * 
@@ -211,7 +211,7 @@ class FlxSave implements IFlxDestroyable
 					return false;
 			}
 		}
-		catch (e)
+		catch (e:Error)
 		{
 			FlxG.log.error('Error:${e.message} name:"$name", path:"$path".');
 			destroy();
@@ -308,14 +308,14 @@ class FlxSave implements IFlxDestroyable
 
 		try
 		{
-			final result = _sharedObject.flush(minFileSize);
+			var result = _sharedObject.flush(minFileSize);
 
 			if (result != FLUSHED)
-				status = SAVE_ERROR(STORAGE);
+				status = ERROR("FlxSave is requesting extra storage space.");
 		}
-		catch (e)
+		catch (e:Error)
 		{
-			status = SAVE_ERROR(ENCODING(e));
+			status = ERROR("There was an problem flushing the save data.");
 		}
 		
 		checkStatus();
@@ -353,10 +353,8 @@ class FlxSave implements IFlxDestroyable
 				return true;
 			case EMPTY:
 				FlxG.log.warn("You must call save.bind() before you can read or write data.");
-			case SAVE_ERROR(STORAGE):
-				FlxG.log.error("FlxSave is requesting extra storage space");
-			case SAVE_ERROR(ENCODING(e)):
-				FlxG.log.error('There was an problem encoding the save data: ${e.message}');
+			case ERROR(msg):
+				FlxG.log.error(msg);
 			case LOAD_ERROR(IO(e)):
 				FlxG.log.error('IO ERROR: ${e.message}');
 			case LOAD_ERROR(INVALID_NAME(name, reason)):
@@ -743,15 +741,6 @@ enum LoadFailureType
 	PARSING(rawData:String, exception:Exception);
 }
 
-enum SaveFailureType
-{
-	/** FlxSave is requesting extra storage space **/
-	STORAGE;
-	
-	/** There was an problem encoding the save data */
-	ENCODING(e:Exception);
-}
-
 enum FlxSaveStatus
 {
 	/**
@@ -765,16 +754,12 @@ enum FlxSaveStatus
 	BOUND(name:String, ?path:String);
 	
 	/**
-	 * There was an issue during `flush`. Previously known as `ERROR(msg:String)`
+	 * There was an issue during `flush`
 	 */
-	SAVE_ERROR(type:SaveFailureType);
+	ERROR(msg:String);
 	
 	/**
 	 * There was an issue while loading
 	 */
 	LOAD_ERROR(type:LoadFailureType);
-	
-	@:noCompletion
-	@:deprecated("FlxSaveStatus.ERROR is never used, it has been replaced by SAVE_ERROR")
-	ERROR(msg:String);
 }

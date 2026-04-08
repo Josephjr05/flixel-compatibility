@@ -71,7 +71,7 @@ private class AnchorTools
 			case TOP_LEFT:
 				result;
 			case CUSTOM(offset):
-				result.add(offset);
+				result.addPoint(offset);
 		}
 	}
 }
@@ -113,6 +113,41 @@ private class AnchorTools
  */
 class FlxPath extends FlxBasePath
 {
+	/**
+	 * Move from the start of the path to the end then stop.
+	 */
+	@:deprecated("Use FORWARD or FlxPathType.FORWARD instead")
+	@:noCompletion
+	public static inline var FORWARD = FlxPathType.FORWARD;
+	
+	/**
+	 * Move from the end of the path to the start then stop.
+	 */
+	@:deprecated("Use BACKWARD or FlxPathType.BACKWARD instead")
+	@:noCompletion
+	public static inline var BACKWARD = FlxPathType.BACKWARD;
+	
+	/**
+	 * Move from the start of the path to the end then directly back to the start, and start over.
+	 */
+	@:deprecated("Use LOOP_FORWARD or FlxPathType.LOOP_FORWARD instead")
+	@:noCompletion
+	public static inline var LOOP_FORWARD = FlxPathType.LOOP_FORWARD;
+	
+	/**
+	 * Move from the end of the path to the start then directly back to the end, and start over.
+	 */
+	@:deprecated("Use LOOP_BACKWARD or FlxPathType.LOOP_BACKWARD instead")
+	@:noCompletion
+	public static inline var LOOP_BACKWARD = FlxPathType.LOOP_BACKWARD;
+	
+	/**
+	 * Move from the start of the path to the end then turn around and go back to the start, over and over.
+	 */
+	@:deprecated("Use YOYO or FlxPathType.YOYO instead")
+	@:noCompletion
+	public static inline var YOYO = FlxPathType.YOYO;
+
 	/**
 	 * Path behavior controls: move from the start of the path to the end then stop.
 	 */
@@ -399,7 +434,7 @@ class FlxPath extends FlxBasePath
 		}
 		else
 		{
-			var velocity = object.velocity.copyFrom(node).subtract(_point);
+			var velocity = object.velocity.copyFrom(node).subtractPoint(_point);
 			velocity.length = speed;
 			angle = velocity.degrees;
 		}

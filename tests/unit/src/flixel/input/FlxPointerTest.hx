@@ -1,7 +1,7 @@
 package flixel.input;
 
-import flixel.input.FlxPointer;
 import flixel.math.FlxPoint;
+import flixel.input.FlxPointer;
 import massive.munit.Assert;
 
 class FlxPointerTest
@@ -59,13 +59,13 @@ class FlxPointerTest
 		Assert.areEqual(120, FlxG.camera.viewMarginY);// 480/4
 		
 		pointer.setRawPositionUnsafe(50 * FlxG.scaleMode.scale.x, 50 * FlxG.scaleMode.scale.y);
-		FlxAssert.pointsEqual(p( 50,  50), pointer.getGamePosition  (result));
-		FlxAssert.pointsEqual(p( 15,  19), pointer.getViewPosition  (result));
-		FlxAssert.pointsEqual(p(150, 124), pointer.getWorldPosition (result));
+		FlxAssert.pointsEqual(p( 50,  50), pointer.getGamePosition  (result)); //  (50, 50)
+		FlxAssert.pointsEqual(p(155, 139), pointer.getViewPosition  (result)); // ((50, 50) - (20, 12)) / 2 + (140, 120)
+		FlxAssert.pointsEqual(p(150, 124), pointer.getWorldPosition (result)); // ((50, 50) - (20, 12)) / 2 + (140, 120) - (-5, -15)
 		Assert.areEqual( 50, pointer.gameX);
 		Assert.areEqual( 50, pointer.gameY);
-		Assert.areEqual( 15, pointer.viewX);
-		Assert.areEqual( 19, pointer.viewY);
+		Assert.areEqual(155, pointer.viewX);
+		Assert.areEqual(139, pointer.viewY);
 		Assert.areEqual(150, pointer.x);
 		Assert.areEqual(124, pointer.y);
 	}
@@ -73,7 +73,6 @@ class FlxPointerTest
 	@Test
 	function testNullResult()
 	{
-		// Test that a new point is returned when a result is not supplied (A common dev error)
 		try
 		{
 			final result = pointer.getPosition();
@@ -81,7 +80,7 @@ class FlxPointerTest
 		}
 		catch(e)
 		{
-			Assert.fail('Exception thrown from "getPosition", message: "${e.message}", stack:\n${e.stack}');
+			Assert.fail('Exception thrown from "getPosition", message: "${e.message}"');
 		}
 		
 		try
@@ -91,7 +90,7 @@ class FlxPointerTest
 		}
 		catch(e)
 		{
-			Assert.fail('Exception thrown from "getWorldPosition", message: "${e.message}", stack:\n${e.stack}');
+			Assert.fail('Exception thrown from "getWorldPosition", message: "${e.message}"');
 		}
 		
 		try
@@ -101,7 +100,7 @@ class FlxPointerTest
 		}
 		catch(e)
 		{
-			Assert.fail('Exception thrown from "getViewPosition", message: "${e.message}", stack:\n${e.stack}');
+			Assert.fail('Exception thrown from "getViewPosition", message: "${e.message}"');
 		}
 		
 		try
@@ -111,7 +110,7 @@ class FlxPointerTest
 		}
 		catch(e)
 		{
-			Assert.fail('Exception thrown from "getGamePosition", message: "${e.message}", stack:\n${e.stack}');
+			Assert.fail('Exception thrown from "getGamePosition", message: "${e.message}"');
 		}
 	}
 }

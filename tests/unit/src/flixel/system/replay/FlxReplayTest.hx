@@ -90,11 +90,12 @@ class FlxReplayTest extends FlxTest
 			createFrameRecord(3, JUST_RELEASED)
 		];
 		var recording = frames.map(function(r) return r.save()).join("\n");
-		FlxG.vcr.loadReplay(recording, ReplayState.new);
+		var state = new ReplayState();
+		FlxG.vcr.loadReplay(recording, state);
 
 		step(10);
 
-		Assert.isTrue((cast FlxG.state:ReplayState).called);
+		Assert.isTrue(state.called);
 	}
 
 	function createFrameRecord(i:Int, mouseState:FlxInputState):FrameRecord

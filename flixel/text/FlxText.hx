@@ -22,6 +22,7 @@ import openfl.text.TextFormat;
 import openfl.text.TextFormatAlign;
 
 using flixel.util.FlxStringUtil;
+
 #if flash
 import openfl.geom.Rectangle;
 #end
@@ -239,10 +240,8 @@ class FlxText extends FlxSprite
 		textField.text = Text;
 		fieldWidth = FieldWidth;
 		textField.embedFonts = EmbeddedFont;
+		textField.sharpness = 100;
 		textField.height = (Text.length <= 0) ? 1 : 10;
-
-		// call this just to set the textfield's properties
-		set_antialiasing(antialiasing);
 
 		allowCollisions = NONE;
 		moves = false;
@@ -666,24 +665,17 @@ class FlxText extends FlxSprite
 		updateDefaultFormat();
 		return LetterSpacing;
 	}
-	
-	override function setColorTransform(redMultiplier = 1.0, greenMultiplier = 1.0, blueMultiplier = 1.0, alphaMultiplier = 1.0, redOffset = 0.0, greenOffset = 0.0, blueOffset = 0.0, alphaOffset = 0.0)
-	{
-		super.setColorTransform(1, 1, 1, 1, redOffset, greenOffset, blueOffset, alphaOffset);
-		_defaultFormat.color = FlxColor.fromRGBFloat(redMultiplier, greenMultiplier, blueMultiplier, 0);
-		updateDefaultFormat();
-	}
 
-	override function set_color(value:FlxColor):Int
+	override function set_color(Color:FlxColor):Int
 	{
-		if (_defaultFormat.color == value.rgb)
+		if (_defaultFormat.color == Color.to24Bit())
 		{
-			return value;
+			return Color;
 		}
-		_defaultFormat.color = value.rgb;
-		color = value;
+		_defaultFormat.color = Color.to24Bit();
+		color = Color;
 		updateDefaultFormat();
-		return value;
+		return Color;
 	}
 
 	inline function get_font():String
@@ -864,7 +856,19 @@ class FlxText extends FlxSprite
 
 	override function updateColorTransform():Void
 	{
-		colorTransform.alphaMultiplier = alpha;
+		if (colorTransform == null)
+			colorTransform = new ColorTransform();
+
+		if (alpha != 1)
+		{
+			colorTransform.alphaMultiplier = alpha;
+			useColorTransform = true;
+		}
+		else
+		{
+			colorTransform.alphaMultiplier = 1;
+			useColorTransform = false;
+		}
 
 		dirty = true;
 	}
@@ -1028,11 +1032,11 @@ class FlxText extends FlxSprite
 	override function drawSimple(camera:FlxCamera):Void
 	{
 		// same as super but checks _graphicOffset
-		getScreenPosition(_point, camera).subtract(offset).subtract(_graphicOffset);
+		getScreenPosition(_point, camera).subtractPoint(offset).subtractPoint(_graphicOffset);
 		if (isPixelPerfectRender(camera))
 			_point.floor();
 		
-		_point.copyTo(_flashPoint);
+		_point.copyToFlash(_flashPoint);
 		camera.copyPixels(_frame, framePixels, _flashRect, _flashPoint, colorTransform, blend, antialiasing);
 	}
 	
@@ -1051,7 +1055,7 @@ class FlxText extends FlxSprite
 		}
 		
 		// same as super but checks _graphicOffset
-		getScreenPosition(_point, camera).subtract(offset).subtract(_graphicOffset);
+		getScreenPosition(_point, camera).subtractPoint(offset).subtractPoint(_graphicOffset);
 		_point.add(origin.x, origin.y);
 		_matrix.translate(_point.x, _point.y);
 		
@@ -1229,7 +1233,7 @@ class FlxText extends FlxSprite
 	{
 		// Apply the default format
 		copyTextFormat(_defaultFormat, FormatAdjusted, false);
-		FormatAdjusted.color = UseBorderColor ? borderColor.rgb : _defaultFormat.color;
+		FormatAdjusted.color = UseBorderColor ? borderColor.to24Bit() : _defaultFormat.color;
 		textField.setTextFormat(FormatAdjusted);
 
 		// Apply other formats
@@ -1244,7 +1248,7 @@ class FlxText extends FlxSprite
 			{
 				var textFormat:TextFormat = formatRange.format.format;
 				copyTextFormat(textFormat, FormatAdjusted, false);
-				FormatAdjusted.color = UseBorderColor ? formatRange.format.borderColor.rgb : textFormat.color;
+				FormatAdjusted.color = UseBorderColor ? formatRange.format.borderColor.to24Bit() : textFormat.color;
 			}
 
 			textField.setTextFormat(FormatAdjusted, formatRange.range.start, Std.int(Math.min(formatRange.range.end, textField.text.length)));
@@ -1287,24 +1291,6 @@ class FlxText extends FlxSprite
 		super.set_frames(Frames);
 		_regen = false;
 		return Frames;
-	}
-
-	override function set_antialiasing(value:Bool):Bool
-	{
-		if (value)
-		{
-			textField.antiAliasType = NORMAL;
-			textField.sharpness = 100;
-		}
-		else
-		{
-			textField.antiAliasType = ADVANCED;
-			textField.sharpness = 400;
-		}
-
-		_regen = true;
-
-		return antialiasing = value;
 	}
 }
 
